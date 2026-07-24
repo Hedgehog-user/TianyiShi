@@ -1,0 +1,639 @@
+/* ===== 字体 ===== */
+@font-face{font-family:'FZSiLTJW';src:url('assets/fonts/FZSiLTJW.TTF') format('truetype');font-display:swap;}
+@font-face{font-family:'AreYouSerious';src:url('assets/fonts/AreYouSerious-Regular.ttf') format('truetype');font-display:swap;}
+@font-face{font-family:'EarlySummer';src:url('assets/fonts/EarlySummerSerif-Bold.otf') format('opentype');font-weight:bold;font-display:swap;}
+@font-face{font-family:'Quentin';src:url('assets/fonts/Quentin-2.otf') format('opentype');font-display:swap;}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ===== 拼贴星星光标（全站强制统一：任何元素、任何状态都是这个星星图标）=====
+   用户提供的撕纸拼贴星形，32x32，热点在星尖 */
+*,*::before,*::after{
+  cursor:url("assets/img/wand-cursor.png?v=2") 15 4, auto !important;
+}
+/* 星星棒点击迸发的小星星粒子 */
+.wand-spark{position:fixed;z-index:99999;pointer-events:none;
+  font-size:16px;line-height:1;opacity:0;will-change:transform,opacity;
+  text-shadow:0 0 6px rgba(180,210,255,.9);}
+.wand-spark.go{animation:wandSpark .7s ease-out forwards;}
+@keyframes wandSpark{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(.4) rotate(0deg);}
+  100%{opacity:0;transform:translate(calc(-50% + var(--wx,0px)),calc(-50% + var(--wy,-40px))) scale(1) rotate(var(--wr,90deg));}
+}
+@media (prefers-reduced-motion:reduce){.wand-spark{display:none;}}
+
+/* ===== 首屏 Loading 遮罩 ===== */
+.loader{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 120% 120% at center,#243456 0%,#1a2748 55%,#131e39 100%);
+  transition:opacity .8s ease,visibility .8s ease;
+}
+.loader.done{opacity:0;visibility:hidden;pointer-events:none;}
+.loader-inner{display:flex;flex-direction:column;align-items:center;gap:26px;}
+.loader-disc{
+  width:132px;height:132px;position:relative;
+  filter:drop-shadow(0 8px 22px rgba(0,0,0,.45));
+  animation:loaderSpin 2.2s linear infinite;
+}
+.loader-disc img{width:100%;height:100%;display:block;}
+@keyframes loaderSpin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+.loader-title{
+  font-family:'FZSiLTJW',serif;font-size:22px;letter-spacing:.32em;
+  color:#eaf0ff;text-indent:.32em;opacity:.92;
+}
+.loader-bar{
+  width:220px;height:4px;border-radius:4px;overflow:hidden;
+  background:rgba(255,255,255,.14);
+}
+.loader-bar span{
+  display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#8fb0ff,#dfe9ff);
+  box-shadow:0 0 10px rgba(160,200,255,.7);
+  transition:width .35s ease;
+}
+.loader-tip{font-family:'FZSiLTJW',serif;font-size:13px;color:#a9bce6;letter-spacing:.04em;}
+.loader-tip b{color:#e9f1ff;font-weight:700;}
+/* 加载中隐藏主内容，加载完由 .ready 触发整站淡入 */
+body.is-loading .screen{opacity:0;}
+.screen{transition:opacity .9s ease;}
+body.ready .screen{opacity:1;}
+
+/* 留边：用牛仔底图本身放大模糊铺满全屏，与画布同纹理 → 接缝消失 */
+html,body{width:100%;height:100%;background:#1c2a4d;overflow:hidden;}
+body{display:flex;justify-content:center;align-items:center;min-height:100vh;}
+/* 全屏背景层：与画面同一张牛仔星空图，cover 铺满、放大模糊压暗，作为所有屏幕的统一底 */
+body::before{
+  content:"";position:fixed;inset:-30px;z-index:-1;
+  background:#1c2a4d url('assets/img/bg-denim-stars.png') center center / cover no-repeat;
+  filter:blur(10px) brightness(.9) saturate(.95);
+  transform:scale(1.06);
+}
+
+/* ===== 缩放容器：1440x900 固定画布等比缩放 ===== */
+.scaler{position:relative;width:1440px;height:900px;flex:0 0 auto;transform-origin:center center;transform:scale(var(--s,1));}
+.stage{position:absolute;inset:0;width:1440px;height:900px;overflow:hidden;background:#7F90B6;user-select:none;}
+
+/* ===== 鼠标视差：给带 data-depth 的元素外层套 .plx 包裹层，只平移包裹层，
+   内部元素原有动画/transform 完全不受影响（分层，绝不冲突）===== */
+.plx{
+  position:absolute;
+  transition:transform .5s cubic-bezier(.22,.61,.36,1);
+  transform:translate3d(var(--px,0px),var(--py,0px),0);
+  will-change:transform;
+  pointer-events:none;   /* 视差包裹层不拦鼠标，事件穿透到底下可交互元素（如字母）*/
+}
+/* 包裹层内需要交互的元素（照片/夹子等）自行恢复点击 */
+.plx > .ab-photo,.plx > .ab-spin{pointer-events:auto;}
+@media (prefers-reduced-motion:reduce){.plx{transform:none!important;}}
+
+/* ===== 单页应用：每屏铺满，切屏 = 显示/隐藏 + 上划覆盖（无跳转→音乐不断、动画必现） ===== */
+body.app{display:block;overflow:hidden;background:transparent;}
+.screen{
+  position:fixed;inset:0;display:none;
+  justify-content:center;align-items:center;background:transparent;
+}
+.screen.is-active{display:flex;z-index:1;}
+/* 目标屏：位于上层，初始藏屏幕下方，滑入覆盖当前屏 */
+.screen.is-incoming{
+  z-index:2;transform:translateY(100%);
+  transition:transform .6s cubic-bezier(.22,.61,.36,1);
+}
+.screen.is-incoming.slide-in{transform:translateY(0);}
+@media (prefers-reduced-motion:reduce){
+  .screen.is-incoming{transition:none;transform:none;}
+}
+.page-transition{display:none;}
+
+/* ===== 通用元素：左上角锚点 ===== */
+.el{position:absolute;display:block;}
+.bg-denim,.bg-torn{object-fit:cover;pointer-events:none;}
+
+/* 直接嵌入 Figma 矢量 SVG 作为整页底图（1:1 还原） */
+.svg-base{position:absolute;left:0;top:0;width:1440px;height:900px;z-index:1;pointer-events:none;}
+/* 遮盖条：盖住 SVG 里烘焙的大号导航文字（顶部 0~80px） */
+.nav-cover{position:absolute;left:0;top:0;width:1440px;height:80px;z-index:5;pointer-events:none;}
+/* CSS 导航覆盖在遮盖条上，字号与首页一致 */
+.nav-css .nav-item{color:#f4f6fb;}
+/* About 页遮盖 SVG 小号导航文字的补丁（在 CSS 文字之下、底图之上）；
+   用径向渐变中心实心、边缘透明，融入带纹理的深蓝背景，避免硬边色块 */
+.navpatch{position:absolute;z-index:6;pointer-events:none;}
+/* 透明导航热区：SVG 自带导航文字，热区只负责点击 + hover 下划线，文字本身透明 */
+.nav-ghost .nav-item{color:transparent!important;text-shadow:none!important;}
+.nav-ghost .nav-item.active::after{display:none;}   /* active 下划线 SVG 里已有，避免重叠 */
+/* svg-base 页（About）导航文字是透明占位，其盒子宽度与 SVG 里可见文字不一致，
+   悬停下划线改为居中固定宽度，避免偏移 */
+.nav-ghost .nav-item::after{
+  left:50%;right:auto;width:var(--uw,58px);bottom:auto;top:12px;   /* 每词自适应宽度；离文字底部留 gap */
+  transform:translateX(-50%) scaleX(0);transform-origin:center center;
+}
+.nav-ghost .nav-item:hover::after{transform:translateX(-50%) scaleX(1);}
+/* Ending 页导航文字为黑色 */
+.nav-dark.nav-css .nav-item{color:#111;text-shadow:0 1px 3px rgba(255,255,255,.3);}
+.nav-dark .nav-item::after{background:#111;}
+/* 星星底图缓慢漂移，营造星空移动感（放大留余量，避免露出边缘） */
+.bg-denim{
+  transform-origin:center center;
+  animation:starDrift 20s ease-in-out infinite;
+}
+@keyframes starDrift{
+  0%{transform:scale(1.14) translate(-34px,-20px);}
+  25%{transform:scale(1.14) translate(30px,-30px);}
+  50%{transform:scale(1.14) translate(38px,26px);}
+  75%{transform:scale(1.14) translate(-28px,32px);}
+  100%{transform:scale(1.14) translate(-34px,-20px);}
+}
+
+/* ===== 导航（FZSiLTJW；left 为文字中心 x） ===== */
+.nav{position:absolute;z-index:30;inset:0;pointer-events:none;}
+.nav-item{
+  position:absolute;top:47px;transform:translateX(-50%);
+  pointer-events:auto;
+  font-family:'FZSiLTJW',serif;
+  font-size:21px;color:#f4f6fb;text-decoration:none;
+  letter-spacing:.03em;white-space:nowrap;
+  transition:transform .2s ease,color .2s ease;
+  text-shadow:0 1px 4px rgba(0,0,0,.45);
+}
+.nav-item::after{
+  content:"";
+  position:absolute;left:0;right:0;bottom:-7px;
+  height:2px;background:#fff;border-radius:2px;
+  transform:scaleX(0);transform-origin:left center;
+  transition:transform .35s cubic-bezier(.65,0,.35,1);
+}
+.nav-item:hover{transform:translateX(-50%) translateY(-2px) scale(1.06);color:#fff;}
+.nav-item:hover::after{transform:scaleX(1);}
+.nav-item.active::after{transform:scaleX(1);animation:underlineGrow .55s cubic-bezier(.65,0,.35,1);}
+@keyframes underlineGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+
+/* ===== 音符：左右摆动（定格动画感，节奏更快） ===== */
+.note-wrap{position:absolute;}
+.note{
+  display:block;width:100%;height:100%;
+  transform-origin:50% 15%;
+  animation:noteSwing .7s steps(3,end) infinite alternate;
+}
+@keyframes noteSwing{
+  0%{transform:rotate(-15deg);}
+  100%{transform:rotate(15deg);}
+}
+
+/* ===== PORTFOLIO 剪字（摆动在外层 wrapper，hover 放大在内层 img，互不冲突）===== */
+.letter{
+  position:absolute;
+  transform-origin:50% 90%;
+  animation:letterSwing 1s steps(4,end) infinite alternate;
+  animation-delay:var(--d,0s);
+}
+.letter img{
+  display:block;width:100%;height:100%;
+  filter:drop-shadow(2px 4px 5px rgba(0,0,0,.3));
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  cursor:pointer;
+}
+.letter:hover{z-index:30;animation-play-state:paused;}
+.letter:hover img{transform:scale(1.18);}
+@keyframes letterSwing{
+  0%{transform:rotate(-5deg);}
+  100%{transform:rotate(5deg);}
+}
+/* 音乐播放时：PORTFOLIO 字母跟节奏上下轻跳（作用在内层 img，与外层摆动分层；hover 时暂停让位放大）*/
+.screen[data-screen="home"].bgm-on .letter img{animation:letterBeat .5s ease-in-out infinite alternate;animation-delay:var(--d,0s);}
+.screen[data-screen="home"].bgm-on .letter:hover img{animation-play-state:paused;}
+@keyframes letterBeat{
+  0%{transform:translateY(0) scale(1);}
+  100%{transform:translateY(-7px) scale(1.04);}
+}
+@media (prefers-reduced-motion:reduce){.screen[data-screen="home"].bgm-on .letter img{animation:none;}}
+
+/* 鱼群（在标题之上，缓慢上下浮动） */
+.fish{
+  pointer-events:none;opacity:.97;
+  transform-origin:50% 50%;
+  animation:fishFloat 6.5s ease-in-out infinite;
+}
+@keyframes fishFloat{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  50%{transform:translateY(-7px) rotate(-.4deg);}
+}
+
+/* ===== 星星（右上，轻轻摆动） ===== */
+.star-wrap{position:absolute;}
+.star-wrap img{
+  display:block;width:100%;height:100%;
+  transform-origin:50% 50%;
+  animation:starSwing 2.4s ease-in-out infinite alternate;
+  animation-delay:var(--d,0s);
+  filter:drop-shadow(2px 3px 4px rgba(0,0,0,.3));
+}
+@keyframes starSwing{
+  0%{transform:rotate(-16deg) scale(.95);}
+  100%{transform:rotate(16deg) scale(1.05);}
+}
+
+/* ===== CD 唱片 ===== */
+.cd{transform-origin:50% 50%;filter:drop-shadow(4px 6px 12px rgba(0,0,0,.35));}
+.cd.playing{animation:cdSpin 3.4s linear infinite;}
+.cd:not(.playing){animation:cdJitter 2.2s ease-in-out infinite;}
+
+/* ===== 唱臂：初始抬高远离 CD/音符 ===== */
+.tonearm-shadow{opacity:.16;pointer-events:none;transition:opacity .5s ease;}
+.tonearm-btn{
+  position:absolute;z-index:12;
+  background:none;border:none;padding:0;cursor:pointer;
+  transform-origin:50% 14%;
+  transform:rotate(-30deg);
+  transition:transform 1.1s cubic-bezier(.5,.05,.3,1);
+}
+.tonearm-btn .tonearm{display:block;width:100%;height:100%;filter:drop-shadow(2px 3px 5px rgba(0,0,0,.4));}
+.tonearm-btn.playing{transform:rotate(0deg);}
+
+/* ===== 署名 ===== */
+.signature{opacity:.95;}
+
+/* ===== Productions 页：作品贴纸卡片 + 勺叉摆动 ===== */
+.prod-stage{background:#0f1730;}
+
+/* 勺子/叉子：钟摆式左右摆动（顶部为支点） */
+.cutlery{position:absolute;}
+.cutlery img{
+  display:block;width:100%;height:100%;
+  transform-origin:50% 8%;
+  animation:cutlerySwing 3s ease-in-out infinite alternate;
+  animation-delay:var(--d,0s);
+  filter:drop-shadow(2px 4px 6px rgba(0,0,0,.35));
+}
+@keyframes cutlerySwing{
+  0%{transform:rotate(-5deg);}
+  100%{transform:rotate(5deg);}
+}
+
+/* 盘中作品贴纸：链接到作品页；外层持续微摆 + 内层 hover 抬起放大（分层避免 transform 冲突） */
+.card-link{
+  position:absolute;display:block;cursor:pointer;
+  transform-origin:50% 90%;
+  animation:cardSwing 2.6s ease-in-out infinite alternate;
+  animation-delay:var(--sw,0s);
+}
+.card-link img{
+  display:block;width:100%;height:100%;
+  transition:transform .3s cubic-bezier(.34,1.4,.64,1),filter .3s ease;
+  filter:drop-shadow(3px 6px 10px rgba(0,0,0,.35));
+}
+.card-link:hover{z-index:30;animation-play-state:paused;}
+.card-link:hover img{
+  transform:translateY(-12px) scale(1.06) rotate(-1deg);
+  filter:drop-shadow(6px 16px 22px rgba(0,0,0,.5));
+}
+@keyframes cardSwing{
+  0%{transform:rotate(-1.6deg);}
+  100%{transform:rotate(1.6deg);}
+}
+
+/* ===== 作品详情占位页 ===== */
+.ph-wrap{
+  position:absolute;inset:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.ph-title{font-family:'FZSiLTJW',serif;font-size:40px;color:#eef1f8;letter-spacing:.04em;}
+.ph-sub{font-family:'FZSiLTJW',serif;font-size:18px;color:#9fb0d6;}
+.ph-back{
+  margin-top:14px;font-family:'FZSiLTJW',serif;font-size:16px;color:#cfe;
+  text-decoration:none;border:1px solid rgba(255,255,255,.4);
+  padding:8px 22px;border-radius:24px;transition:all .25s ease;
+}
+.ph-back:hover{background:rgba(255,255,255,.12);transform:translateY(-2px);}
+
+/* ===== 作品长图块（CD 页封面下方保留的 3 张长图）===== */
+.work-long{
+  display:block;
+  width:100%;max-width:1440px;height:auto;
+  margin:0 auto;
+}
+/* 左上角返回键（固定不随滚动，始终可点） */
+.work-back{
+  position:absolute;left:26px;top:22px;z-index:50;
+  width:58px;height:auto;cursor:pointer;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.4));
+  transition:transform .2s ease;
+}
+.work-back img{display:block;width:100%;height:auto;}
+.work-back:hover{transform:translateX(-3px) scale(1.06);}
+
+/* ===== 作品开头页（鲨鱼/蝴蝶/猫咪 三个，结构同 CD 长图页）=====
+   整页块级可滚动：上方封面(背景星空+标题+说明) + 下方黑色区域(留作以后放作品) + 左上返回键 */
+.screen.work-cover{display:none;}
+.screen.work-cover.is-active{display:block;}   /* 覆盖 flex，改块级以便滚动 */
+.wc-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;background:#000;-webkit-overflow-scrolling:touch;}
+/* 封面区：固定 16:10 比例的背景，铺满上方一屏 */
+.wc-cover{position:relative;width:100%;max-width:1440px;margin:0 auto;
+  aspect-ratio:1440/900;overflow:hidden;background:#0b1430;}
+.wc-cover .wc-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+/* 封面底部渐变过渡：星空封面 → 黑色，柔化与下方作品的衔接 */
+.wc-cover::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22%;z-index:2;
+  pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(2,6,20,.55) 55%,#000 100%);}
+/* 标题（手写体图，居中偏上，进入时浮现）
+   四张标题图字形密度不同(单字墨迹宽 p1=107 p2=94 p3=90 p4=85)，若统一行高会让"单字"看起来大小不一。
+   以蝴蝶 p2 的单字大小为基准，给每页单独设显示高度 --th，使各标题"单个字"视觉一致。 */
+.wc-title{position:absolute;left:50%;top:31%;transform:translateX(-50%) translateY(12px);
+  width:auto;height:var(--th,14.45%);opacity:0;z-index:3;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,.4));}
+.wc-desc{position:absolute;left:50%;top:48%;transform:translateX(-50%) translateY(12px);
+  width:auto;height:3.4%;max-height:31px;opacity:0;z-index:3;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));}
+/* 作品封面页 Tianyishi 白色水印（往上移，保证点进来首屏就能看到）*/
+.wc-sign{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
+  width:166px;height:auto;opacity:0;z-index:4;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));}
+.work-cover.is-active .wc-title{animation:wcIn .8s cubic-bezier(.22,.61,.36,1) .25s both;}
+.work-cover.is-active .wc-desc{animation:wcIn .8s cubic-bezier(.22,.61,.36,1) .5s both;}
+.work-cover.is-active .wc-sign{animation:wcIn .8s cubic-bezier(.22,.61,.36,1) .7s both;}
+@keyframes wcIn{0%{opacity:0;transform:translateX(-50%) translateY(12px);}100%{opacity:1;transform:translateX(-50%) translateY(0);}}
+/* 下方黑色待填充区（以后放作品大图/视频）*/
+.wc-blank{width:100%;max-width:1440px;margin:0 auto;min-height:900px;background:#000;
+  display:flex;align-items:flex-start;justify-content:center;}
+.wc-blank span{margin-top:60px;font-family:'FZSiLTJW',serif;font-size:15px;color:#33405e;letter-spacing:.08em;}
+@media (prefers-reduced-motion:reduce){.work-cover .wc-title,.work-cover .wc-desc,.work-cover .wc-sign{animation:none!important;opacity:1!important;transform:translateX(-50%)!important;}}
+
+/* ===== About me 页：轻微摆动装饰 & 照片 ===== */
+.deco-sway{transform-origin:50% 20%;animation:decoSway 3.2s ease-in-out infinite alternate;}
+@keyframes decoSway{0%{transform:rotate(-4deg);}100%{transform:rotate(4deg);}}
+.t-title-float{animation:titleFloat 3.5s ease-in-out infinite;}
+@keyframes titleFloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-5px) rotate(-2deg);}}
+.photo{border-radius:14px;transition:transform .3s ease,box-shadow .3s ease;box-shadow:0 6px 16px rgba(0,0,0,.3);}
+.photo:hover{transform:scale(1.04) rotate(-1deg);box-shadow:0 10px 24px rgba(0,0,0,.4);}
+
+/* ===== About me 页：圈出的 4 个图案转动摆动 ===== */
+.ab-spin{position:absolute;transform-origin:50% 50%;}
+.ab-spin img{display:block;width:100%;height:100%;filter:drop-shadow(2px 4px 6px rgba(0,0,0,.28));}
+.ab-spin{animation:abSpin 3s ease-in-out infinite alternate;animation-delay:var(--sp,0s);}
+@keyframes abSpin{0%{transform:rotate(-8deg);}100%{transform:rotate(8deg);}}
+/* 右上星群在原图带 32.27° 基础旋转，摆动叠加在其上 */
+.ab-spin-rot{animation:abSpinRot 3s ease-in-out infinite alternate;animation-delay:var(--sp,0s);}
+@keyframes abSpinRot{0%{transform:rotate(24deg);}100%{transform:rotate(40deg);}}
+
+/* About me 人物照片：叠加图严格贴合底图那张（同 24.5 圆角、无独立描边/阴影，避免与底图照片叠出双层边框）；
+   悬停时轻微抬升放大端详 */
+.ab-photo{position:absolute;border-radius:24.5px;cursor:pointer;
+  transform-origin:50% 50%;
+  transition:transform .35s cubic-bezier(.34,1.4,.5,1),filter .35s ease;}
+.ab-photo:hover{
+  transform:scale(1.05) rotate(-2deg);
+  filter:drop-shadow(0 12px 24px rgba(0,0,0,.4));z-index:20;}
+
+/* ===== About me 进场：切到该页时，卡片/图案像被一张张贴上剪贴板 ===== */
+/* 初始隐藏（缩小+下移+旋转+透明）；加 .go 后弹回原位。用独立包裹思路：
+   直接作用在元素外层 transform，通过 CSS 变量与自身动画分层避免冲突 */
+.about .ab-in{opacity:0;}
+.about.about-play .ab-in{
+  animation:abStick .62s cubic-bezier(.22,1.35,.5,1) both;
+  animation-delay:var(--in,0s);
+}
+@keyframes abStick{
+  0%{opacity:0;transform:translateY(26px) scale(.82) rotate(-6deg);}
+  60%{opacity:1;}
+  100%{opacity:1;transform:translateY(0) scale(1) rotate(0deg);}
+}
+/* 进场结束后清掉 transform，交还给各自的摆动/hover（避免残留 transform 冲突） */
+.about.about-done .ab-in{animation:none;opacity:1;}
+@media (prefers-reduced-motion:reduce){
+  .about .ab-in{opacity:1!important;animation:none!important;}
+}
+
+/* 人物照片专用进场：原位"从无到有"淡入 + 极轻微放大浮现（不位移不弹跳，
+   避免与相邻狗狗照片的弹跳动作叠在一起打架）*/
+.about .ab-fade{opacity:0;}
+.about.about-play .ab-fade{
+  animation:abFadeIn .9s ease both;
+  animation-delay:var(--in,0s);
+}
+@keyframes abFadeIn{
+  0%{opacity:0;transform:scale(.94);}
+  100%{opacity:1;transform:scale(1);}
+}
+.about.about-done .ab-fade{animation:none;opacity:1;}
+@media (prefers-reduced-motion:reduce){
+  .about .ab-fade{opacity:1!important;animation:none!important;}
+}
+
+/* ===== About me 软件图标 hover：弹跳 + 名称气泡 ===== */
+.ab-soft{position:absolute!important;z-index:14;cursor:pointer;display:block!important;
+  border-radius:12px;transition:transform .28s cubic-bezier(.34,1.6,.5,1);}
+.ab-soft::after{
+  content:attr(title);
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);
+  padding:3px 10px;border-radius:12px;white-space:nowrap;
+  font-family:'FZSiLTJW',serif;font-size:12px;color:#26355f;
+  background:rgba(255,255,255,.92);box-shadow:0 4px 12px rgba(0,0,0,.22);
+  opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;
+}
+.ab-soft:hover{transform:translateY(-7px) scale(1.14);}
+.ab-soft:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ===== About me 彩蛋 1：法斗犬照片点击抖动 + 冒爱心 ===== */
+.ab-pug{position:absolute;display:block;cursor:pointer;
+  transform-origin:50% 60%;
+  transition:transform .3s cubic-bezier(.34,1.5,.6,1),filter .3s ease;}
+.ab-pug img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;}
+.ab-pug:hover{transform:scale(1.07) rotate(-2deg);
+  filter:drop-shadow(0 10px 22px rgba(0,0,0,.4));z-index:20;}
+.ab-pug.wiggle{animation:pugWiggle .5s ease;}
+@keyframes pugWiggle{
+  0%,100%{transform:rotate(0) scale(1);}
+  15%{transform:rotate(-4deg) scale(1.04);}
+  40%{transform:rotate(3.5deg) scale(1.05);}
+  65%{transform:rotate(-2.5deg) scale(1.03);}
+  85%{transform:rotate(1.5deg) scale(1.02);}
+}
+/* 爱心/爪印粒子 */
+.ab-heart{position:absolute;z-index:60;pointer-events:none;font-size:22px;
+  opacity:0;will-change:transform,opacity;}
+.ab-heart.go{animation:abHeart 1s ease-out forwards;}
+@keyframes abHeart{
+  0%{opacity:0;transform:translate(0,0) scale(.5) rotate(0);}
+  20%{opacity:1;}
+  100%{opacity:0;transform:translate(var(--hx,0),var(--hy,-60px)) scale(1.2) rotate(var(--hr,0deg));}
+}
+
+/* ===== About me 质感 3：两张纸缓慢呼吸翘边（模拟纸张被风吹的起伏）===== */
+.about .svg-base{transform-origin:50% 42%;animation:paperBreath 9s ease-in-out infinite;}
+@keyframes paperBreath{
+  0%,100%{transform:scale(1) rotate(0deg);}
+  50%{transform:scale(1.006) rotate(.12deg);}
+}
+@media (prefers-reduced-motion:reduce){.about .svg-base{animation:none;}}
+/* About me 手写标题：保留底图原样，不叠加、不放大 */
+.ab-title,.ab-title-cover{display:none;}
+
+/* ===== Ending 页：星星闪烁摆动 + Thanks 浮动 ===== */
+.star-tw{
+  transform-origin:50% 50%;
+  animation:starTwinkle 3.4s ease-in-out infinite alternate;
+  animation-delay:var(--d,0s);
+}
+@keyframes starTwinkle{
+  0%{transform:rotate(-10deg) scale(.94);opacity:.85;}
+  100%{transform:rotate(10deg) scale(1.06);opacity:1;}
+}
+.t-thanks-float{animation:thanksFloat 4s ease-in-out infinite;}
+@keyframes thanksFloat{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-8px) rotate(-1deg);}}
+.tbc{animation:tbcNudge 1.4s ease-in-out infinite;}
+/* tbc 同时是 end-seq：浮现阶段先不跑 nudge，避免 transform 打架；seq-done 后再跑 */
+.end-stage .tbc.end-seq{animation:none;}
+.end-stage.seq-done .tbc.end-seq{animation:tbcNudge 1.4s ease-in-out infinite;}
+@keyframes tbcNudge{0%,100%{transform:translateX(0);}50%{transform:translateX(8px);}}
+
+/* ===== Ending 页：可拖拽 + 摆动的星星，Thanks 悬停放大 ===== */
+.end-stage{background:#9fb2c4;}
+.star-drag{position:absolute;cursor:grab;touch-action:none;}
+.star-drag img{
+  display:block;width:100%;height:100%;pointer-events:none;
+  transform-origin:50% 50%;
+  animation:floatA var(--dur,11s) ease-in-out infinite;
+  animation-delay:var(--sw,0s);
+  filter:drop-shadow(2px 3px 5px rgba(0,0,0,.25));
+}
+/* 三种漂浮路径变体，让每颗星星像落叶般各自游移，不再原地打转 */
+.star-drag.f-b img{animation-name:floatB;}
+.star-drag.f-c img{animation-name:floatC;}
+.star-drag.dragging{cursor:grabbing;z-index:50!important;}
+.star-drag.dragging img{animation:none;}
+@keyframes floatA{
+  0%{transform:translate(0,0) rotate(0deg);}
+  25%{transform:translate(20px,-16px) rotate(7deg);}
+  50%{transform:translate(34px,12px) rotate(-5deg);}
+  75%{transform:translate(12px,26px) rotate(6deg);}
+  100%{transform:translate(0,0) rotate(0deg);}
+}
+@keyframes floatB{
+  0%{transform:translate(0,0) rotate(0deg);}
+  25%{transform:translate(-24px,14px) rotate(-8deg);}
+  50%{transform:translate(10px,30px) rotate(5deg);}
+  75%{transform:translate(26px,10px) rotate(-4deg);}
+  100%{transform:translate(0,0) rotate(0deg);}
+}
+@keyframes floatC{
+  0%{transform:translate(0,0) rotate(0deg);}
+  33%{transform:translate(18px,22px) rotate(9deg);}
+  66%{transform:translate(-22px,12px) rotate(-7deg);}
+  100%{transform:translate(0,0) rotate(0deg);}
+}
+.t-thanks{cursor:pointer;transition:transform .35s cubic-bezier(.34,1.5,.6,1);transform-origin:50% 50%;}
+.t-thanks:hover{transform:scale(1.09) rotate(-1.5deg);}
+.t-thanks svg{display:block;width:100%;height:100%;}
+/* Thanks 写完的 Q 弹 */
+.t-thanks.th-pop{animation:thPop .6s cubic-bezier(.34,1.7,.5,1);}
+@keyframes thPop{0%{transform:scale(1);}35%{transform:scale(1.08) rotate(-1.5deg);}70%{transform:scale(.99);}100%{transform:scale(1);}}
+/* Thanks 写完迸发的星光粒子 */
+.th-spark{position:absolute;z-index:40;pointer-events:none;width:12px;height:12px;
+  background:radial-gradient(circle,#fff 0%,#bcd8ff 45%,rgba(150,190,255,0) 72%);
+  border-radius:50%;opacity:0;}
+.th-spark.go{animation:thSpark .85s ease-out forwards;}
+@keyframes thSpark{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.2);}}
+
+/* Ending 落款接力浮现：Thanks 写完后依次淡入上移 */.end-seq{opacity:0;}
+.end-stage.seq-in .end-seq{
+  animation:endSeqIn .7s cubic-bezier(.22,.61,.36,1) both;
+  animation-delay:var(--sq,0s);
+}
+@keyframes endSeqIn{0%{opacity:0;transform:translateY(16px);}100%{opacity:1;transform:translateY(0);}}
+/* tbc 有自己的 tbcNudge 循环动画，浮现完成后交还 */
+.end-stage.seq-done .end-seq{opacity:1;}
+@media (prefers-reduced-motion:reduce){.end-seq{opacity:1!important;animation:none!important;}}
+
+/* ===== Ending 星星版像素跑酷小游戏 ===== */
+.star-run{position:absolute;cursor:pointer;
+  border-radius:14px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(28,42,77,.55) 0%,rgba(40,56,96,.5) 100%);
+  box-shadow:inset 0 0 0 2px rgba(150,180,255,.35),0 6px 18px rgba(0,0,0,.25);
+  backdrop-filter:blur(1px);}
+.star-run canvas{display:block;width:100%;height:100%;image-rendering:pixelated;}
+.sr-tip{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  text-align:center;font-family:'FZSiLTJW',serif;font-size:15px;color:#eaf0ff;
+  letter-spacing:.04em;text-shadow:0 1px 4px rgba(0,0,0,.5);pointer-events:none;
+  transition:opacity .3s ease;}
+.sr-tip.hide{opacity:0;}
+.sr-score{position:absolute;right:14px;top:8px;font-family:'FZSiLTJW',monospace;
+  font-size:15px;color:#cfe0ff;letter-spacing:.12em;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.sr-over{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;background:rgba(20,30,58,.66);}
+.sr-over.show{display:flex;}
+.sr-over span{font-family:'FZSiLTJW',serif;font-size:22px;color:#fff;letter-spacing:.18em;
+  text-shadow:0 0 10px rgba(150,190,255,.8);}
+.sr-over small{font-family:'FZSiLTJW',serif;font-size:12px;color:#b9c9ee;}
+/* 通关成功浮层 */
+.sr-win{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;background:rgba(20,40,72,.72);}
+.sr-win.show{display:flex;animation:srWinPop .5s cubic-bezier(.22,1.4,.5,1) both;}
+.sr-win span{font-family:'FZSiLTJW',serif;font-size:26px;color:#eaf6ff;letter-spacing:.2em;
+  text-shadow:0 0 16px rgba(150,200,255,1),0 0 6px #fff;}
+.sr-win small{font-family:'FZSiLTJW',serif;font-size:12px;color:#bfe0ff;letter-spacing:.06em;}
+@keyframes srWinPop{0%{opacity:0;transform:scale(.8);}100%{opacity:1;transform:scale(1);}}
+@media (prefers-reduced-motion:reduce){.star-run{display:none;}}
+
+/* ===== 播放提示（居中，偏下） ===== */
+.hint{
+  position:absolute;z-index:30;left:720px;bottom:74px;transform:translateX(-50%);
+  font-family:'FZSiLTJW',serif;font-size:14px;color:#eef1f8;
+  background:rgba(40,52,82,.5);padding:5px 16px;border-radius:20px;
+  white-space:nowrap;transition:opacity .6s ease,transform .6s ease;backdrop-filter:blur(2px);
+}
+.hint.hide{opacity:0;transform:translateX(-50%) translateY(8px);pointer-events:none;}
+
+/* ===== 动画 ===== */
+@keyframes cdSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes cdJitter{0%,100%{transform:rotate(-.8deg);}50%{transform:rotate(.8deg);}}
+@media (prefers-reduced-motion:reduce){.letter,.note,.fish,.star-wrap img,.bg-denim,.cd:not(.playing){animation:none;}}
+
+
+/* ===== Ending 星座连线小游戏 ===== */
+/* SVG 连线层：铺满舞台，位于星星之下、文字之上 */
+.constellation-svg{position:absolute;left:0;top:0;width:1440px;height:900px;z-index:3;pointer-events:none;overflow:visible;}
+.constellation-svg line{
+  stroke:#fff;stroke-width:2.4;stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(180,210,255,.9));
+  opacity:.92;
+}
+/* 连线绘制动画 */
+.constellation-svg line.draw{
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  animation:lineDraw .45s ease forwards;
+}
+@keyframes lineDraw{to{stroke-dashoffset:0;}}
+
+/* 连线模式下：星星带序号提示光圈；已点亮的发光脉冲 */
+.star-drag.cn-next img{animation:cnPulse 1.1s ease-in-out infinite;}
+@keyframes cnPulse{0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.5)) drop-shadow(2px 3px 5px rgba(0,0,0,.25));}
+  50%{filter:drop-shadow(0 0 16px rgba(190,220,255,1)) drop-shadow(2px 3px 5px rgba(0,0,0,.25));}}
+.star-drag.cn-lit img{
+  animation:none!important;
+  filter:drop-shadow(0 0 14px rgba(200,225,255,.95)) drop-shadow(0 0 26px rgba(150,190,255,.65)) !important;
+}
+/* 序号角标 */
+.star-drag .cn-num{
+  position:absolute;left:50%;top:-6px;transform:translateX(-50%);
+  font-family:'FZSiLTJW',serif;font-size:15px;color:#fff;font-weight:700;
+  text-shadow:0 0 6px rgba(80,120,200,.9);pointer-events:none;
+  opacity:0;transition:opacity .3s;
+}
+.cn-active .star-drag .cn-num{opacity:.95;}
+
+/* 完成庆祝：Thanks 脉冲放大 */
+.t-thanks.cn-celebrate{animation:cnThanks 1.6s ease;}
+@keyframes cnThanks{0%{transform:scale(1);}30%{transform:scale(1.16) rotate(-2deg);}60%{transform:scale(1.04);}100%{transform:scale(1);}}
+
+/* 粒子 */
+.cn-spark{position:absolute;width:10px;height:10px;pointer-events:none;z-index:40;
+  background:radial-gradient(circle,#fff 0%,#bcd8ff 45%,rgba(150,190,255,0) 72%);
+  border-radius:50%;opacity:0;}
+.cn-spark.go{animation:cnSpark .9s ease-out forwards;}
+@keyframes cnSpark{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2);}}
+
+/* 完成后的祝福语 */
+.cn-wish{
+  position:absolute;left:720px;top:792px;transform:translateX(-50%) translateY(10px);
+  z-index:35;font-family:'FZSiLTJW',serif;font-size:20px;color:#2b3c66;
+  opacity:0;transition:opacity .8s ease,transform .8s ease;white-space:nowrap;text-align:center;
+  text-shadow:0 1px 8px rgba(255,255,255,.7);
+}
+.cn-wish.show{opacity:1;transform:translateX(-50%) translateY(0);}

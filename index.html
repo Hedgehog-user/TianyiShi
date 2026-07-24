@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tianyi Shi · Portfolio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="app is-loading">
+
+<!-- ================= 首屏 Loading 遮罩 ================= -->
+<div id="loader" class="loader">
+  <div class="loader-inner">
+    <div class="loader-disc">
+      <img src="assets/img/cd.png" alt="">
+    </div>
+    <div class="loader-title">TIANYI SHI</div>
+    <div class="loader-bar"><span id="loaderFill"></span></div>
+    <div class="loader-tip">正在准备作品集 · <b id="loaderPct">0</b>%</div>
+  </div>
+</div>
+
+<!-- 常驻背景音乐：整个站只有这一个 <audio>，切屏时永不重建 → 音乐绝不中断 -->
+<audio id="bgm" src="assets/audio/theme.mp3" loop preload="auto"></audio>
+
+<!-- ================= HOME ================= -->
+<section class="screen is-active" data-screen="home">
+<div class="scaler"><div class="stage">
+  <img class="el bg-denim" src="assets/img/bg-denim-stars.png" style="left:0;top:44px;width:1440px;height:811px;z-index:1;">
+  <img class="el bg-torn"  src="assets/img/bg-torn-paper.png"  style="left:0;top:0;width:1440px;height:900px;z-index:2;">
+
+  <nav class="nav">
+    <a href="#home"        class="nav-item active" data-go="home"        style="left:400px;">Home</a>
+    <a href="#about"       class="nav-item"        data-go="about"       style="left:596px;">About me</a>
+    <a href="#productions" class="nav-item"        data-go="productions" style="left:820px;">Productions</a>
+    <a href="#ending"      class="nav-item"        data-go="ending"      style="left:1032px;">Ending</a>
+  </nav>
+
+  <div class="note-wrap" data-depth="16" style="left:206px;top:245px;width:40px;height:78px;z-index:7;"><img class="note" src="assets/img/note-treble.png" style="animation-delay:0s;"></div>
+  <div class="note-wrap" data-depth="20" style="left:136px;top:653px;width:90px;height:80px;z-index:7;"><img class="note" src="assets/img/note-double.png" style="animation-delay:.25s;"></div>
+  <div class="note-wrap" data-depth="24" style="left:55px;top:733px;width:39px;height:65px;z-index:7;"><img class="note" src="assets/img/note-single.png" style="animation-delay:.5s;"></div>
+
+  <div class="star-wrap" data-depth="26" style="left:1071px;top:163px;width:114px;height:121px;z-index:20;--d:0s;"><img src="assets/img/star-light.png" alt=""></div>
+  <div class="star-wrap" data-depth="34" style="left:1168px;top:122px;width:144px;height:148px;z-index:19;--d:.35s;"><img src="assets/img/star-dark.png" alt=""></div>
+
+  <div class="letter" style="left:318px; top:373px; width:182px;height:218px;z-index:15;--d:0s;"><img src="assets/img/letter-P.png"  alt="P"></div>
+  <div class="letter" style="left:452px; top:397px; width:131px;height:136px;z-index:16;--d:.09s;"><img src="assets/img/letter-O1.png" alt="O"></div>
+  <div class="letter" style="left:548px; top:440px; width:141px;height:124px;z-index:15;--d:.18s;"><img src="assets/img/letter-R.png"  alt="R"></div>
+  <div class="letter" style="left:656px; top:367px; width:133px;height:164px;z-index:16;--d:.27s;"><img src="assets/img/letter-T.png"  alt="T"></div>
+  <div class="letter" style="left:768px; top:336px; width:169px;height:166px;z-index:17;--d:.36s;"><img src="assets/img/letter-F.png"  alt="F"></div>
+  <div class="letter" style="left:884px; top:407px; width:126px;height:140px;z-index:15;--d:.45s;"><img src="assets/img/letter-O2.png" alt="O"></div>
+  <div class="letter" style="left:984px; top:363px; width:120px;height:179px;z-index:16;--d:.54s;"><img src="assets/img/letter-L.png"  alt="L"></div>
+  <div class="letter" style="left:1078px;top:419px; width:129px;height:164px;z-index:15;--d:.63s;"><img src="assets/img/letter-I.png"  alt="I"></div>
+  <div class="letter" style="left:1158px;top:387px; width:143px;height:160px;z-index:16;--d:.72s;"><img src="assets/img/letter-O3.png" alt="O"></div>
+
+  <img class="el fish" data-depth="12" src="assets/img/fish.png" style="left:354px;top:270px;width:932px;height:383px;z-index:18;">
+  <img class="el cd" src="assets/img/cd.png" style="left:-238px;top:217px;width:464px;height:465px;z-index:10;">
+  <img class="el tonearm-shadow" src="assets/img/tonearm-shadow.png" style="left:0;top:449px;width:262px;height:301px;z-index:9;">
+  <button class="tonearm-btn" aria-label="播放/暂停唱片" style="left:36px;top:36px;width:116px;height:374px;"><img class="tonearm" src="assets/img/tonearm.png"></button>
+
+  <img class="el signature" src="assets/img/signature.png" style="left:720px;top:854px;width:166px;height:33px;z-index:22;transform:translateX(-50%);">
+  <div class="hint">点击唱臂，放上唱片开始播放 ♪</div>
+</div></div>
+</section>
+
+<!-- ================= ABOUT ================= -->
+<section class="screen about" data-screen="about">
+<div class="scaler"><div class="stage" style="background:#26355f;">
+  <!-- 底图：已从中移除 Archive 夹子 / 苹果 / 花 / 右上星群（改为下方可转动的独立元素） -->
+  <img class="svg-base" src="assets/svg/about-base.svg" alt="About me">
+
+  <!-- 圈出的 4 个图案：轻微转动摆动（旋转在外层 wrapper，与 hover 互不冲突）；进场依次贴上 + 鼠标视差 -->
+  <div class="ab-spin ab-in" data-depth="20" style="left:679px;top:82px;width:252px;height:232px;z-index:12;--sp:0s;--in:.05s;"><img src="assets/about/clip.png" alt="Archive"></div>
+  <div class="ab-spin ab-spin-rot ab-in" data-depth="26" style="left:1150px;top:96px;width:207px;height:145px;z-index:12;--sp:.6s;--in:.18s;"><img src="assets/about/stars2.png" alt=""></div>
+  <div class="ab-spin ab-in" data-depth="22" style="left:59px;top:636px;width:132px;height:150px;z-index:12;--sp:1s;--in:.3s;"><img src="assets/about/apple.png" alt=""></div>
+  <div class="ab-spin ab-in" data-depth="18" style="left:1146px;top:711px;width:142px;height:142px;z-index:12;--sp:.3s;--in:.42s;"><img src="assets/about/flower.png" alt=""></div>
+
+  <!-- 照片：悬停放大（精确覆盖底图同位照片）；进场贴上 -->
+  <img class="ab-photo ab-fade" style="left:1020.5px;top:329.5px;width:196px;height:196px;z-index:13;--in:.24s;" src="assets/about/photo.png">
+
+  <!-- 法斗犬照片：独立素材精确覆盖底图同位狗狗，悬停放大 + 点击抖动冒爱心彩蛋
+       （底图 pattern20 rect: x=992 y=527 w=225 h=168） -->
+  <a class="ab-pug" id="abPug" title="摸摸我 🐾" style="left:992px;top:527px;width:225px;height:168px;z-index:14;"><img src="assets/about/pug.png" alt="法斗犬"></a>
+
+
+
+  <!-- 软件图标 hover 弹跳热区（透明，精确覆盖 SVG 底图里 5 个图标，坐标取自 about-base.svg 的 rect） -->
+  <a class="ab-soft" title="Procreate"   style="left:179px;top:317px;width:55px;height:53px;"></a>
+  <a class="ab-soft" title="Photoshop"   style="left:234px;top:316px;width:54px;height:54px;"></a>
+  <a class="ab-soft" title="Illustrator" style="left:287px;top:316px;width:54px;height:54px;"></a>
+  <a class="ab-soft" title="Figma"       style="left:345px;top:321px;width:46px;height:46px;"></a>
+  <a class="ab-soft" title="Blender"     style="left:400px;top:319px;width:48px;height:48px;"></a>
+  <!-- About me 标题保留底图原样，不再叠加、不做放大 -->
+
+  <!-- 遮盖 SVG 底图里烘焙的小号导航文字（径向渐变中心实心边缘透明，融入深蓝纹理背景） -->
+  <div class="navpatch" style="left:363px;top:33px;width:74px;height:38px;background:radial-gradient(ellipse at center,#26325a 0%,#26325a 55%,rgba(38,50,90,0) 100%);"></div>
+  <div class="navpatch" style="left:543px;top:33px;width:109px;height:38px;background:radial-gradient(ellipse at center,#26325a 0%,#26325a 58%,rgba(38,50,90,0) 100%);"></div>
+  <div class="navpatch" style="left:758px;top:33px;width:124px;height:38px;background:radial-gradient(ellipse at center,#28345c 0%,#28345c 58%,rgba(40,52,92,0) 100%);"></div>
+  <div class="navpatch" style="left:990px;top:33px;width:84px;height:38px;background:radial-gradient(ellipse at center,#29355d 0%,#29355d 56%,rgba(41,53,93,0) 100%);"></div>
+  <!-- 统一 CSS 导航（与其他页同款 21px） -->
+  <nav class="nav nav-css">
+    <a href="#home"        class="nav-item"        data-go="home"        style="left:400px;">Home</a>
+    <a href="#about"       class="nav-item active"  data-go="about"       style="left:596px;">About me</a>
+    <a href="#productions" class="nav-item"        data-go="productions" style="left:820px;">Productions</a>
+    <a href="#ending"      class="nav-item"        data-go="ending"      style="left:1032px;">Ending</a>
+  </nav>
+</div></div>
+</section>
+
+<!-- ================= PRODUCTIONS ================= -->
+<section class="screen" data-screen="productions">
+<div class="scaler"><div class="stage prod-stage">
+  <img class="el" src="assets/prod/bg.png" style="left:0;top:0;width:1440px;height:900px;z-index:1;">
+  <img class="el" src="assets/prod/l57.png" style="left:228px;top:101px;width:1012px;height:750px;z-index:2;">
+  <img class="el" src="assets/prod/l58.png" style="left:244px;top:157px;width:980px;height:638px;z-index:3;">
+  <img class="el" src="assets/prod/l59.png" style="left:361px;top:151px;width:746px;height:650px;z-index:4;">
+  <img class="el" src="assets/prod/l62.png" style="left:145px;top:85px;width:618px;height:781px;z-index:5;">
+  <img class="el" src="assets/prod/l61.png" style="left:901px;top:101px;width:229px;height:303px;z-index:6;">
+  <img class="el" src="assets/prod/l53.png" style="left:280px;top:138px;width:907px;height:675px;z-index:7;">
+  <div class="cutlery" style="left:102px;top:85px;width:293px;height:504px;z-index:8;--d:0s;"><img src="assets/prod/l49.png"></div>
+  <div class="cutlery" style="left:1058px;top:253px;width:280px;height:592px;z-index:9;--d:.4s;"><img src="assets/prod/l50.png"></div>
+
+  <a class="card-link" data-go="work-shark"     style="left:375px;top:157px;width:447px;height:311px;z-index:11;--sw:0s;"><img src="assets/prod/l65.png"></a>
+  <a class="card-link" data-go="work-cat"       style="left:395px;top:426px;width:314px;height:285px;z-index:12;--sw:.5s;"><img src="assets/prod/l63.png"></a>
+  <a class="card-link" data-go="work-record"    style="left:687px;top:476px;width:287px;height:295px;z-index:13;--sw:1s;"><img src="assets/prod/l64.png"></a>
+  <a class="card-link" data-go="work-butterfly" style="left:769px;top:229px;width:361px;height:340px;z-index:14;--sw:1.5s;"><img src="assets/prod/l66.png"></a>
+
+  <nav class="nav">
+    <a href="#home"        class="nav-item"        data-go="home"        style="left:400px;">Home</a>
+    <a href="#about"       class="nav-item"        data-go="about"       style="left:596px;">About me</a>
+    <a href="#productions" class="nav-item active"  data-go="productions" style="left:820px;">Productions</a>
+    <a href="#ending"      class="nav-item"        data-go="ending"      style="left:1032px;">Ending</a>
+  </nav>
+  <img class="el signature" src="assets/img/signature.png" style="left:720px;top:854px;width:166px;height:33px;z-index:22;transform:translateX(-50%);">
+</div></div>
+</section>
+
+<!-- ================= ENDING ================= -->
+<section class="screen" data-screen="ending">
+<div class="scaler"><div class="stage end-stage">
+  <img class="el" src="assets/end/bg.png" style="left:0;top:0;width:1440px;height:900px;z-index:1;">
+
+  <!-- 星座连线 SVG 层 -->
+  <svg class="constellation-svg" id="cnSvg" viewBox="0 0 1440 900" preserveAspectRatio="none"></svg>
+
+  <div class="star-drag" data-cn="1" style="left:28px;top:109px;width:88px;height:90px;z-index:4;--sw:0s;--dur:12s;"><img src="assets/end/star6.png"><span class="cn-num">1</span></div>
+  <div class="star-drag f-b" data-cn="2" style="left:1094px;top:97px;width:101px;height:104px;z-index:4;--sw:.6s;--dur:14s;"><img src="assets/end/star2.png"><span class="cn-num">2</span></div>
+  <div class="star-drag f-c" data-cn="3" style="left:1246px;top:346px;width:97px;height:104px;z-index:4;--sw:1.2s;--dur:13s;"><img src="assets/end/star3.png"><span class="cn-num">3</span></div>
+  <div class="star-drag f-c" data-cn="4" style="left:954px;top:592px;width:102px;height:101px;z-index:4;--sw:.3s;--dur:13.5s;"><img src="assets/end/star8.png"><span class="cn-num">4</span></div>
+  <div class="star-drag f-b" data-cn="5" style="left:1188px;top:719px;width:88px;height:86px;z-index:4;--sw:2.4s;--dur:11.5s;"><img src="assets/end/star9.png"><span class="cn-num">5</span></div>
+  <div class="star-drag" data-cn="6" style="left:148px;top:780px;width:90px;height:85px;z-index:4;--sw:1.6s;--dur:14.5s;"><img src="assets/end/star7.png"><span class="cn-num">6</span></div>
+  <div class="star-drag f-c" data-cn="7" style="left:422px;top:547px;width:89px;height:84px;z-index:4;--sw:.9s;--dur:12.5s;"><img src="assets/end/star4.png"><span class="cn-num">7</span></div>
+  <div class="star-drag f-b" data-cn="8" style="left:177px;top:397px;width:85px;height:95px;z-index:4;--sw:2s;--dur:15s;"><img src="assets/end/star5.png"><span class="cn-num">8</span></div>
+
+  <!-- Thanks：手写描边一笔一画写出，写完淡入实心填充。SVG 由 app.js 进场时注入并驱动动画 -->
+  <div class="el t-thanks" id="tThanks" style="left:343px;top:180px;width:755px;height:179px;z-index:10;"></div>
+  <img class="el end-seq" src="assets/end/t-sub.png" style="left:513px;top:372px;width:414px;height:24px;z-index:10;--sq:.15s;">
+  <img class="el end-seq" src="assets/end/t-contact.png" style="left:545px;top:462px;width:350px;height:53px;z-index:10;--sq:.35s;">
+  <img class="el tbc end-seq" src="assets/end/tobecontinued.png" style="left:554px;top:686px;width:332px;height:73px;z-index:10;--sq:.55s;">
+
+  <!-- 星星版像素跑酷小游戏（联系方式与 To Be Continued 之间）：点击/空格让许愿星跳跃躲陨石 -->
+  <div class="star-run" id="starRun" style="left:470px;top:534px;width:500px;height:130px;z-index:12;">
+    <canvas id="srCanvas" width="1000" height="260"></canvas>
+    <div class="sr-tip" id="srTip">▶ 点击 / 按空格，让许愿星跳过陨石</div>
+    <div class="sr-score" id="srScore">0</div>
+    <div class="sr-over" id="srOver"><span>GAME OVER</span><small>点击 / 空格 重新开始</small></div>
+    <div class="sr-win" id="srWin"><span>✦ 通关成功 ✦</span><small>里程达成 2000 · 点击 / 空格 再玩一次</small></div>
+  </div>
+  <img class="el signature" src="assets/img/signature.png" style="left:720px;top:854px;width:166px;height:33px;z-index:22;transform:translateX(-50%);">
+
+  <div class="cn-wish" id="cnWish">✦ 星座已点亮 · 谢谢你看到这里 ✦</div>
+  <div class="hint hint-end">✦ 按顺序点亮星星，连成星座 · 或拖动它们自由漂浮 ✦</div>
+
+  <nav class="nav nav-dark">
+    <a href="#home"        class="nav-item"        data-go="home"        style="left:400px;">Home</a>
+    <a href="#about"       class="nav-item"        data-go="about"       style="left:596px;">About me</a>
+    <a href="#productions" class="nav-item"        data-go="productions" style="left:820px;">Productions</a>
+    <a href="#ending"      class="nav-item active"  data-go="ending"      style="left:1032px;">Ending</a>
+  </nav>
+</div></div>
+</section>
+
+<!-- ============ 作品开头页（3 个，结构同 CD 长图页：封面 + 下方黑色待填充区 + 返回键） ============ -->
+<section class="screen work-cover" data-screen="work-shark">
+  <div class="wc-scroll">
+    <div class="wc-cover">
+      <img class="wc-bg" src="assets/prod/p1-bg.png" alt="">
+      <img class="wc-title" style="--th:18.4%;" src="assets/prod/p1-title.png" alt="P1 Game UI">
+      <img class="wc-desc" src="assets/prod/p1-desc.png" alt="游戏GUI部分，AI辅助工作流">
+      <img class="wc-sign" src="assets/img/signature.png" alt="Tianyi Shi">
+    </div>
+    <div class="wc-blank"><span>作品内容 · 待填充</span></div>
+  </div>
+  <a class="work-back" data-go="productions" aria-label="返回"><img src="assets/prod/p1-back.png" alt="返回"></a>
+</section>
+
+<section class="screen work-cover" data-screen="work-cat">
+  <div class="wc-scroll">
+    <div class="wc-cover">
+      <img class="wc-bg" src="assets/prod/p3-bg.png" alt="">
+      <img class="wc-title" style="--th:18.37%;" src="assets/prod/p3-title.png" alt="P3 Game Visuals">
+      <img class="wc-desc" src="assets/prod/p3-desc.png" alt="游戏视觉部分，3d设计+AI辅助工作流">
+      <img class="wc-sign" src="assets/img/signature.png" alt="Tianyi Shi">
+    </div>
+    <div class="wc-blank"><span>作品内容 · 待填充</span></div>
+  </div>
+  <a class="work-back" data-go="productions" aria-label="返回"><img src="assets/prod/p3-back.png" alt="返回"></a>
+</section>
+
+<section class="screen work-cover" data-screen="work-record">
+  <!-- CD 贴纸点进来：封面（结构同其他三页）+ 下方保留 3 张作品长图 -->
+  <div class="wc-scroll">
+    <div class="wc-cover">
+      <img class="wc-bg" src="assets/prod/p4-bg.png" alt="">
+      <img class="wc-title" style="--th:16.14%;" src="assets/prod/p4-title.png" alt="P4 Paintings">
+      <img class="wc-desc" src="assets/prod/p4-desc.png" alt="原画设计部分，为纯手绘+AI辅助细化">
+      <img class="wc-sign" src="assets/img/signature.png" alt="Tianyi Shi">
+    </div>
+    <img class="work-long" src="assets/prod/works4_1c.webp" alt="P4 Paintings 作品集">
+    <img class="work-long" src="assets/prod/works4_2.webp" alt="">
+    <img class="work-long" src="assets/prod/works4_3.webp" alt="">
+  </div>
+  <a class="work-back" data-go="productions" aria-label="返回"><img src="assets/prod/p4-back.png" alt="返回"></a>
+</section>
+
+<section class="screen work-cover" data-screen="work-butterfly">
+  <div class="wc-scroll">
+    <div class="wc-cover">
+      <img class="wc-bg" src="assets/prod/p2-bg.png" alt="">
+      <img class="wc-title" src="assets/prod/p2-title.png" alt="P2 OPT Visuals">
+      <img class="wc-desc" src="assets/prod/p2-desc.png" alt="运营视觉部分，3d设计+AI辅助工作流">
+      <img class="wc-sign" src="assets/img/signature.png" alt="Tianyi Shi">
+    </div>
+    <div class="wc-blank"><span>作品内容 · 待填充</span></div>
+  </div>
+  <a class="work-back" data-go="productions" aria-label="返回"><img src="assets/prod/p2-back.png" alt="返回"></a>
+</section>
+
+<script src="assets/end/thanks-path.js"></script>
+<script src="assets/end/star-run.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
